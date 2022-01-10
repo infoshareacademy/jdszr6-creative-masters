@@ -1,0 +1,42 @@
+create view film_analysis_2 as
+select c2.category_id, c2."name" , c3.city , c4.country, i.store_id, c.customer_id , p.rental_id , p.amount 
+from customer c
+join rental r 
+on c.customer_id =r.customer_id 
+join inventory i 
+on r.inventory_id =i.inventory_id 
+join film f 
+on i.film_id = f.film_id 
+join film_category fc 
+on i.film_id = fc.film_id
+join category c2 
+on fc.category_id = c2.category_id 
+join address a 
+on c.address_id = a.address_id 
+join city c3 
+on a.city_id = c3.city_id 
+join country c4 
+on c3.country_id = c4.country_id 
+join payment p 
+on p.customer_id = c.customer_id 
+
+
+select name, count(name) over (partition by name ) as popularnosc
+from film_analysis_2
+order by count(name) over (partition by name ) desc
+--najbardziej popularne filmy animacyjne
+
+select country, mode() within group (order by name) as most_popular_category
+from film_analysis_2
+group by country
+----1 punkt
+
+select store_id, count(store_id)
+from film_analysis_2
+group by store_id
+---pkt 2
+
+select distinct name, sum(amount) over (partition by name)
+from film_analysis_2
+order by sum(amount) over (partition by name) desc 
+-----pkt 3
