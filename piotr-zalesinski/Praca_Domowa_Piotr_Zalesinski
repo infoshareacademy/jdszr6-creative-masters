@@ -1,0 +1,35 @@
+with temptable1 as
+    (
+ SELECT company_name AS Customer,
+     date_part('year', c.Order_Date) AS Year_Sale,
+         CASE(DATE_PART('quarter', c.order_date))
+        WHEN 1 THEN SUM((unit_price*Quantity)*(1-Discount))
+        ELSE 0
+        end as Quarter1,
+        CASE(DATE_PART('quarter', c.order_date))
+        WHEN 2 THEN SUM((unit_price*Quantity)*(1-Discount))
+        ELSE 0
+        end as  Quarter2,
+         CASE(DATE_PART('quarter', c.order_date))
+        WHEN 3 THEN SUM((unit_price*Quantity)*(1-Discount))
+        ELSE 0
+        end as  Quarter3,
+        CASE(DATE_PART('quarter', c.order_date))
+        WHEN 4 THEN SUM((unit_price*Quantity)*(1-Discount))
+        ELSE 0
+        end as  Quarter4
+        ,SUM((unit_price*Quantity)*(1-Discount)) as average_basis
+        ,case when SUM((unit_price*Quantity)*(1-Discount)) = min(SUM((unit_price*Quantity)*(1-Discount))) over (partition by company_name) then min(SUM((unit_price*Quantity)*(1-Discount))) over (partition by company_name) else 0 end as min_value
+    	,case when SUM((unit_price*Quantity)*(1-Discount)) = max(SUM((unit_price*Quantity)*(1-Discount))) over (partition by company_name) then max(SUM((unit_price*Quantity)*(1-Discount))) over (partition by company_name) else 0 end as max_value
+    	,sum(c.freight) over (partition by company_name) as freight_value
+    	,count(c.order_id) over (partition by company_name) as orders_count
+        FROM Customers LEFT JOIN Orders c ON c.customer_id = Customers.customer_id
+     LEFT JOIN order_details od ON od.order_id = c.order_id
+     inner join
+--- najswiezszy rok sprzedazy
+(SELECT cast(to_char(c.order_date,'yyyy') as int)-1 as maxi_year from orders c order by order_date desc limit 1) max_year on maxi_year = cast(to_char(c.order_date,'yyyy') as int)
+     GROUP BY Company_Name, date_part('year', c.Order_Date), DATE_PART('quarter', c.order_date), c.freight, c.order_id
+    )
+select Customer, max(Year_Sale) as Year_Of_Sale, sum(Quarter1+Quarter2+Quarter3+Quarter4) as Customer_Yearly_Orders_Sales, sum(Quarter1) as Quarter_1_Sales,sum(Quarter2)as Quarter_2_Sales,sum(Quarter3) as Quarter_3_Sales,sum(Quarter4) as Quarter_4_Sales,
+avg(average_basis) as Average_Order_Value, sum(min_value) as Min_Order_Value, sum(max_value) as Max_Order_Value, avg(freight_value) as Freight_Value, avg(orders_count) as Orders_Count
+from temptable1 group by Customer
