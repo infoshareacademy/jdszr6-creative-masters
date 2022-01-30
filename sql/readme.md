@@ -6,5 +6,5 @@ Czlonkowie teamu:
 
 Iwona Wątroba
 Piotr Zalesiński
-Julita ∑ojciechowska
+Julita Wojciechowska
 Adam Zdancewicz
